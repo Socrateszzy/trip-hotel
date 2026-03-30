@@ -1,0 +1,386 @@
+[
+  {
+    "id": 1,
+    "name": "豪华五星酒店",
+    "nameEn": "Luxury Five Star Hotel",
+    "address": "北京市朝阳区建国门外大街1号",
+    "city": "北京",
+    "stars": 5,
+    "openYear": 2018,
+    "score": 9.2,
+    "reviewCount": 1280,
+    "images": [
+      "https://picsum.photos/400/300?random=1",
+      "https://picsum.photos/400/300?random=2",
+      "https://picsum.photos/400/300?random=3"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "标准大床房",
+        "area": 35,
+        "maxPerson": 2,
+        "price": 899,
+        "stock": 5
+      },
+      {
+        "id": 2,
+        "type": "豪华套房",
+        "area": 65,
+        "maxPerson": 3,
+        "price": 1299,
+        "stock": 2
+      },
+      {
+        "id": 3,
+        "type": "行政套房",
+        "area": 85,
+        "maxPerson": 4,
+        "price": 1899,
+        "stock": 1
+      }
+    ],
+    "status": "published",
+    "tags": ["免费停车", "含早餐", "游泳池", "健身房", "Wi-Fi"]
+  },
+  {
+    "id": 2,
+    "name": "精品设计酒店",
+    "nameEn": "Boutique Design Hotel",
+    "address": "上海市黄浦区南京东路100号",
+    "city": "上海",
+    "stars": 4,
+    "openYear": 2020,
+    "score": 8.7,
+    "reviewCount": 890,
+    "images": [
+      "https://picsum.photos/400/300?random=4",
+      "https://picsum.photos/400/300?random=5",
+      "https://picsum.photos/400/300?random=6"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "标准双床房",
+        "area": 30,
+        "maxPerson": 2,
+        "price": 569,
+        "stock": 8
+      },
+      {
+        "id": 2,
+        "type": "设计师套房",
+        "area": 50,
+        "maxPerson": 2,
+        "price": 899,
+        "stock": 3
+      }
+    ],
+    "status": "published",
+    "tags": ["设计感强", "艺术氛围", "免费Wi-Fi", "咖啡厅"]
+  },
+  {
+    "id": 3,
+    "name": "商务快捷酒店",
+    "nameEn": "Business Express Hotel",
+    "address": "广州市天河区天河路88号",
+    "city": "广州",
+    "stars": 3,
+    "openYear": 2019,
+    "score": 8.1,
+    "reviewCount": 1200,
+    "images": [
+      "https://picsum.photos/400/300?random=7",
+      "https://picsum.photos/400/300?random=8",
+      "https://picsum.photos/400/300?random=9"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "经济大床房",
+        "area": 25,
+        "maxPerson": 2,
+        "price": 329,
+        "stock": 12
+      },
+      {
+        "id": 2,
+        "type": "商务双床房",
+        "area": 30,
+        "maxPerson": 2,
+        "price": 399,
+        "stock": 8
+      }
+    ],
+    "status": "published",
+    "tags": ["商务中心", "会议室", "免费Wi-Fi", "早餐"]
+  },
+  {
+    "id": 4,
+    "name": "度假村酒店",
+    "nameEn": "Resort Hotel",
+    "address": "三亚市亚龙湾国家旅游度假区",
+    "city": "三亚",
+    "stars": 5,
+    "openYear": 2015,
+    "score": 9.5,
+    "reviewCount": 560,
+    "images": [
+      "https://picsum.photos/400/300?random=10",
+      "https://picsum.photos/400/300?random=11",
+      "https://picsum.photos/400/300?random=12"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "海景大床房",
+        "area": 45,
+        "maxPerson": 2,
+        "price": 1299,
+        "stock": 6
+      },
+      {
+        "id": 2,
+        "type": "豪华海景套房",
+        "area": 75,
+        "maxPerson": 3,
+        "price": 1999,
+        "stock": 3
+      },
+      {
+        "id": 3,
+        "type": "总统套房",
+        "area": 120,
+        "maxPerson": 4,
+        "price": 3999,
+        "stock": 1
+      }
+    ],
+    "status": "published",
+    "tags": ["海景", "私人沙滩", "游泳池", "水疗中心", "亲子"]
+  },
+  {
+    "id": 5,
+    "name": "城市便捷酒店",
+    "nameEn": "City Convenience Hotel",
+    "address": "深圳市福田区福田路123号",
+    "city": "深圳",
+    "stars": 2,
+    "openYear": 2021,
+    "score": 7.8,
+    "reviewCount": 2100,
+    "images": [
+      "https://picsum.photos/400/300?random=13",
+      "https://picsum.photos/400/300?random=14",
+      "https://picsum.photos/400/300?random=15"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "标准大床房",
+        "area": 20,
+        "maxPerson": 2,
+        "price": 199,
+        "stock": 15
+      },
+      {
+        "id": 2,
+        "type": "标准双床房",
+        "area": 22,
+        "maxPerson": 2,
+        "price": 219,
+        "stock": 10
+      }
+    ],
+    "status": "offline",
+    "tags": ["经济实惠", "交通便利", "免费Wi-Fi"]
+  },
+  {
+    "id": 6,
+    "name": "温泉度假酒店",
+    "nameEn": "Hot Spring Resort",
+    "address": "杭州市西湖区龙井路88号",
+    "city": "杭州",
+    "stars": 4,
+    "openYear": 2017,
+    "score": 8.9,
+    "reviewCount": 450,
+    "images": [
+      "https://picsum.photos/400/300?random=16",
+      "https://picsum.photos/400/300?random=17",
+      "https://picsum.photos/400/300?random=18"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "温泉观景房",
+        "area": 40,
+        "maxPerson": 2,
+        "price": 899,
+        "stock": 5
+      },
+      {
+        "id": 2,
+        "type": "豪华温泉套房",
+        "area": 60,
+        "maxPerson": 3,
+        "price": 1299,
+        "stock": 2
+      }
+    ],
+    "status": "published",
+    "tags": ["温泉", "山景", "养生", "免费停车"]
+  },
+  {
+    "id": 7,
+    "name": "商务会议酒店",
+    "nameEn": "Conference Business Hotel",
+    "address": "成都市武侯区人民南路88号",
+    "city": "成都",
+    "stars": 4,
+    "openYear": 2016,
+    "score": 8.6,
+    "reviewCount": 780,
+    "images": [
+      "https://picsum.photos/400/300?random=19",
+      "https://picsum.photos/400/300?random=20",
+      "https://picsum.photos/400/300?random=21"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "商务大床房",
+        "area": 35,
+        "maxPerson": 2,
+        "price": 699,
+        "stock": 8
+      },
+      {
+        "id": 2,
+        "type": "行政套房",
+        "area": 55,
+        "maxPerson": 3,
+        "price": 1099,
+        "stock": 3
+      }
+    ],
+    "status": "published",
+    "tags": ["会议室", "商务中心", "行政酒廊", "免费Wi-Fi"]
+  },
+  {
+    "id": 8,
+    "name": "精品民宿酒店",
+    "nameEn": "Boutique Inn Hotel",
+    "address": "丽江市古城区四方街1号",
+    "city": "丽江",
+    "stars": 3,
+    "openYear": 2022,
+    "score": 8.3,
+    "reviewCount": 320,
+    "images": [
+      "https://picsum.photos/400/300?random=22",
+      "https://picsum.photos/400/300?random=23",
+      "https://picsum.photos/400/300?random=24"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "观景大床房",
+        "area": 30,
+        "maxPerson": 2,
+        "price": 499,
+        "stock": 6
+      },
+      {
+        "id": 2,
+        "type": "庭院套房",
+        "area": 45,
+        "maxPerson": 3,
+        "price": 799,
+        "stock": 2
+      }
+    ],
+    "status": "pending",
+    "tags": ["特色民宿", "庭院", "古风", "免费早餐"]
+  },
+  {
+    "id": 9,
+    "name": "豪华国际酒店",
+    "nameEn": "International Luxury Hotel",
+    "address": "北京市朝阳区三里屯路11号",
+    "city": "北京",
+    "stars": 5,
+    "openYear": 2014,
+    "score": 9.3,
+    "reviewCount": 1560,
+    "images": [
+      "https://picsum.photos/400/300?random=25",
+      "https://picsum.photos/400/300?random=26",
+      "https://picsum.photos/400/300?random=27"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "豪华大床房",
+        "area": 50,
+        "maxPerson": 2,
+        "price": 1599,
+        "stock": 4
+      },
+      {
+        "id": 2,
+        "type": "行政套房",
+        "area": 80,
+        "maxPerson": 3,
+        "price": 2399,
+        "stock": 2
+      },
+      {
+        "id": 3,
+        "type": "总统套房",
+        "area": 150,
+        "maxPerson": 4,
+        "price": 4999,
+        "stock": 1
+      }
+    ],
+    "status": "published",
+    "tags": ["国际品牌", "顶级服务", "水疗中心", "多个餐厅"]
+  },
+  {
+    "id": 10,
+    "name": "经济型酒店",
+    "nameEn": "Budget Hotel",
+    "address": "重庆市渝中区解放碑步行街99号",
+    "city": "重庆",
+    "stars": 2,
+    "openYear": 2023,
+    "score": 7.5,
+    "reviewCount": 1890,
+    "images": [
+      "https://picsum.photos/400/300?random=28",
+      "https://picsum.photos/400/300?random=29",
+      "https://picsum.photos/400/300?random=30"
+    ],
+    "rooms": [
+      {
+        "id": 1,
+        "type": "经济大床房",
+        "area": 18,
+        "maxPerson": 2,
+        "price": 179,
+        "stock": 20
+      },
+      {
+        "id": 2,
+        "type": "经济双床房",
+        "area": 20,
+        "maxPerson": 2,
+        "price": 199,
+        "stock": 15
+      }
+    ],
+    "status": "offline",
+    "tags": ["经济实惠", "交通便利", "基础设施"]
+  }
+]
