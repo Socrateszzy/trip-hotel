@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import hotelsData from '../../data/hotels.json';
-import { citiesByProvince, allCities } from '../../data/cities';
+import { citiesByProvince } from '../../data/cities';
 import { useHotelStore } from '../../store/useHotelStore';
 
 interface Hotel {
@@ -105,9 +105,7 @@ const HotelForm: React.FC = () => {
 
   // 通用状态
   const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 标签选项
   const tagOptions = ['WiFi', '免费停车', '含早餐', '健身房', '泳池', '亲子', '豪华', '商务中心', '机场接送'];

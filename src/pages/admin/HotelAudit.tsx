@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface Hotel {
   id: number;
@@ -37,8 +37,8 @@ const HotelAudit: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   
-  // 分页状态
-  const [currentPage, setCurrentPage] = useState(1);
+  // 分页状态（保留分页变量，用于未来分页功能）
+  const [currentPage, _setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   
   // 审核相关状态
@@ -116,17 +116,10 @@ const HotelAudit: React.FC = () => {
   });
 
   // 分页计算
-  const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentHotels = filteredHotels.slice(indexOfFirstItem, indexOfLastItem);
 
-  // 处理分页变化
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
 
   // 状态标签颜色
   const getStatusBadge = (status: string, rejectReason?: string) => {

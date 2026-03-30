@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { citiesByProvince, allCities } from '../../data/cities';
+import { citiesByProvince } from '../../data/cities';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
