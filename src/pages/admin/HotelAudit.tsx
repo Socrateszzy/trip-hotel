@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface Hotel {
   id: number;
@@ -36,6 +36,10 @@ const HotelAudit: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'published' | 'offline' | 'rejected'>('all');
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   
   // 审核相关状态
   const [showRejectModal, setShowRejectModal] = useState(false);
@@ -110,6 +114,19 @@ const HotelAudit: React.FC = () => {
     
     return true;
   });
+
+  // 分页计算
+  const totalPages = Math.ceil(filteredHotels.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentHotels = filteredHotels.slice(indexOfFirstItem, indexOfLastItem);
+
+  // 处理分页变化
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   // 状态标签颜色
   const getStatusBadge = (status: string, rejectReason?: string) => {
@@ -372,11 +389,13 @@ const HotelAudit: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredHotels.map((hotel) => (
+                  {currentHotels.map((hotel) => (
                     <tr key={hotel.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{hotel.name}</div>
+                          <div className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline cursor-pointer" onClick={() => navigate(`/user/detail/${hotel.id}`)}>
+                            {hotel.name}
+                          </div>
                           <div className="text-sm text-gray-500">{hotel.nameEn}</div>
                         </div>
                       </td>
@@ -400,6 +419,20 @@ const HotelAudit: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-2">
+                          {/* 查看详情和编辑按钮（所有状态都显示） */}
+                          <button
+                            onClick={() => navigate(`/user/detail/${hotel.id}`)}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
+                          >
+                            查看
+                          </button>
+                          <button
+                            onClick={() => navigate(`/admin/form/${hotel.id}`)}
+                            className="px-3 py-1 bg-purple-600 text-white text-xs font-medium rounded hover:bg-purple-700"
+                          >
+                            编辑
+                          </button>
+                          
                           {/* 根据状态显示不同的操作按钮 */}
                           {hotel.status === 'pending' && (
                             <>
@@ -441,7 +474,7 @@ const HotelAudit: React.FC = () => {
                               className="px-3 py-1 bg-gray-300 text-gray-700 text-xs font-medium rounded cursor-not-allowed"
                               disabled
                             >
-                              查看详情
+                              已拒绝
                             </button>
                           )}
                         </div>

@@ -12,10 +12,28 @@ const HotelList: React.FC = () => {
   const priceRange = searchParams.get('priceRange') || '不限';
   const tags = searchParams.get('tags')?.split(',').filter(Boolean) || [];
   
-  // 筛选状态
+  // 排序方式
+  const [sortBy, setSortBy] = useState<string>('推荐排序');
+  
+  // 价格筛选状态
+  const priceOptions = ['不限', '200以下', '200-500', '500-1000', '1000以上'] as const;
+  type PriceOption = typeof priceOptions[number];
+  
+  // 转换priceRange到新的选项（兼容旧参数）
+  const getTransformedPriceRange = (range: string): PriceOption => {
+    if (range === '500以上') return '500-1000'; // 旧参数映射到500-1000范围
+    if (priceOptions.includes(range as PriceOption)) return range as PriceOption;
+    return '不限';
+  };
+  
+  const [priceFilter, setPriceFilter] = useState<PriceOption>(getTransformedPriceRange(priceRange));
+  
+  // 星级筛选状态（多选复选框）
   const [selectedStars, setSelectedStars] = useState<number[]>([]);
-  const [priceFilter, setPriceFilter] = useState<'不限' | '200以下' | '200-500' | '500以上'>(priceRange as any || '不限');
-  const [selectedTags, setSelectedTags] = useState<string[]>(tags);
+  
+  // 酒店设施筛选状态（多选标签）
+  const facilityTags = ['WiFi', '停车', '早餐', '健身房', '泳池', '亲子'];
+  const [selectedFacilities, setSelectedFacilities] = useState<string[]>(tags);
   
   // 酒店数据
   const [hotels, setHotels] = useState<any[]>([]);
@@ -29,7 +47,7 @@ const HotelList: React.FC = () => {
   // 应用筛选
   useEffect(() => {
     applyFilters();
-  }, [hotels, selectedStars, priceFilter, selectedTags]);
+  }, [hotels, selectedStars, priceFilter, selectedFacilities, sortBy]);
 
   const loadHotels = () => {
     try {
@@ -81,7 +99,7 @@ const HotelList: React.FC = () => {
       result = result.filter(hotel => hotel.city === city);
     }
 
-    // 星级筛选
+    // 星级筛选（多选）
     if (selectedStars.length > 0) {
       result = result.filter(hotel => {
         return selectedStars.some(star => hotel.stars >= star);
@@ -97,22 +115,56 @@ const HotelList: React.FC = () => {
             return minPrice < 200;
           case '200-500':
             return minPrice >= 200 && minPrice <= 500;
-          case '500以上':
-            return minPrice > 500;
+          case '500-1000':
+            return minPrice >= 500 && minPrice <= 1000;
+          case '1000以上':
+            return minPrice > 1000;
           default:
             return true;
         }
       });
     }
 
-    // 标签筛选
-    if (selectedTags.length > 0) {
+    // 设施筛选（多选标签）
+    if (selectedFacilities.length > 0) {
+      // 将前端设施标签映射到酒店的真实标签
+      const facilityMapping: Record<string, string[]> = {
+        'WiFi': ['Wi-Fi', '免费Wi-Fi'],
+        '停车': ['免费停车'],
+        '早餐': ['含早餐', '早餐'],
+        '健身房': ['健身房'],
+        '泳池': ['游泳池', '泳池'],
+        '亲子': ['亲子']
+      };
+      
       result = result.filter(hotel => {
-        return selectedTags.every(tag => hotel.tags.includes(tag));
+        return selectedFacilities.every(facility => {
+          const relatedTags = facilityMapping[facility] || [facility];
+          return relatedTags.some(tag => hotel.tags.includes(tag));
+        });
       });
     }
 
-    setFilteredHotels(result);
+    // 排序
+    let sortedResult = [...result];
+    switch (sortBy) {
+      case '价格从低到高':
+        sortedResult.sort((a, b) => getHotelMinPrice(a) - getHotelMinPrice(b));
+        break;
+      case '价格从高到低':
+        sortedResult.sort((a, b) => getHotelMinPrice(b) - getHotelMinPrice(a));
+        break;
+      case '评分最高':
+        sortedResult.sort((a, b) => b.score - a.score);
+        break;
+      case '推荐排序':
+      default:
+        // 默认按推荐排序（评分*评价数量权重）
+        sortedResult.sort((a, b) => (b.score * Math.log(b.reviewCount + 1)) - (a.score * Math.log(a.reviewCount + 1)));
+        break;
+    }
+
+    setFilteredHotels(sortedResult);
   };
 
   // 处理星级选择
@@ -126,13 +178,13 @@ const HotelList: React.FC = () => {
     });
   };
 
-  // 处理标签选择
-  const handleTagSelect = (tag: string) => {
-    setSelectedTags(prev => {
-      if (prev.includes(tag)) {
-        return prev.filter(t => t !== tag);
+  // 处理设施选择
+  const handleFacilitySelect = (facility: string) => {
+    setSelectedFacilities(prev => {
+      if (prev.includes(facility)) {
+        return prev.filter(f => f !== facility);
       } else {
-        return [...prev, tag];
+        return [...prev, facility];
       }
     });
   };
@@ -169,12 +221,9 @@ const HotelList: React.FC = () => {
     setFilteredHotels(sorted);
   };
 
-  // 常用标签
-  const commonTags = ['免费停车', '含早餐', '游泳池', '健身房', 'Wi-Fi', '亲子', '豪华', '商务中心'];
-
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1200px] mx-auto p-4">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">酒店列表</h1>
           <p className="text-gray-600">找到最适合您的住宿选择</p>
@@ -192,19 +241,43 @@ const HotelList: React.FC = () => {
           )}
         </header>
 
-        <div className="flex flex-col md:flex-row gap-6">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* 筛选侧边栏 */}
-          <aside className="w-full md:w-1/4">
-            <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <aside className="w-full md:w-[280px] shrink-0">
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-6 sticky top-6">
               <h3 className="text-lg font-semibold mb-4">筛选条件</h3>
-              <div className="space-y-6">
+              <div className="space-y-8">
+                {/* 排序方式 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    排序方式
+                  </label>
+                  <div className="space-y-2">
+                    {['推荐排序', '价格从低到高', '价格从高到低', '评分最高'].map((sortOption) => (
+                      <div key={sortOption} className="flex items-center">
+                        <input
+                          type="radio"
+                          id={`sort-${sortOption}`}
+                          name="sort"
+                          checked={sortBy === sortOption}
+                          onChange={() => setSortBy(sortOption)}
+                          className="mr-2"
+                        />
+                        <label htmlFor={`sort-${sortOption}`} className="text-gray-700 cursor-pointer text-sm">
+                          {sortOption}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* 价格范围筛选 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     价格范围
                   </label>
                   <div className="space-y-2">
-                    {(['不限', '200以下', '200-500', '500以上'] as const).map((range) => (
+                    {priceOptions.map((range) => (
                       <div key={range} className="flex items-center">
                         <input
                           type="radio"
@@ -214,7 +287,7 @@ const HotelList: React.FC = () => {
                           onChange={() => setPriceFilter(range)}
                           className="mr-2"
                         />
-                        <label htmlFor={`price-${range}`} className="text-gray-700 cursor-pointer">
+                        <label htmlFor={`price-${range}`} className="text-gray-700 cursor-pointer text-sm">
                           {range === '不限' ? '不限' : `¥${range}`}
                         </label>
                       </div>
@@ -222,10 +295,10 @@ const HotelList: React.FC = () => {
                   </div>
                 </div>
 
-                {/* 星级筛选 */}
+                {/* 酒店星级筛选 - 多选复选框 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    星级
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    酒店星级
                   </label>
                   <div className="space-y-2">
                     {[5, 4, 3, 2, 1].map((star) => (
@@ -237,43 +310,67 @@ const HotelList: React.FC = () => {
                           onChange={() => handleStarSelect(star)}
                           className="mr-2"
                         />
-                        <label htmlFor={`star-${star}`} className="text-gray-700 cursor-pointer">
-                          {'★'.repeat(star)}星及以上
+                        <label htmlFor={`star-${star}`} className="text-gray-700 cursor-pointer text-sm">
+                          {'★'.repeat(star)}星
                         </label>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* 标签筛选 */}
+                {/* 酒店设施筛选 - 多选标签 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    酒店标签
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    酒店设施
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {commonTags.map((tag) => (
-                      <button
-                        key={tag}
-                        className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                          selectedTags.includes(tag)
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }`}
-                        onClick={() => handleTagSelect(tag)}
-                      >
-                        {tag}
-                      </button>
-                    ))}
+                    {facilityTags.map((facility) => {
+                      const facilityIcons: Record<string, string> = {
+                        'WiFi': '📶',
+                        '停车': '🚗',
+                        '早餐': '🍳',
+                        '健身房': '💪',
+                        '泳池': '🏊',
+                        '亲子': '🧒'
+                      };
+                      return (
+                        <button
+                          key={facility}
+                          className={`px-3 py-1.5 rounded-full text-sm transition-colors flex items-center ${
+                            selectedFacilities.includes(facility)
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                          onClick={() => handleFacilitySelect(facility)}
+                        >
+                          <span className="mr-1">{facilityIcons[facility] || ''}</span>
+                          {facility}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* 应用筛选按钮 */}
-                <button 
-                  className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition mt-4"
-                  onClick={handleApplyFilters}
-                >
-                  应用筛选
-                </button>
+                {/* 按钮组 */}
+                <div className="flex gap-3 pt-2">
+                  <button 
+                    className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    onClick={handleApplyFilters}
+                  >
+                    应用筛选
+                  </button>
+                  <button 
+                    className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+                    onClick={() => {
+                      setSelectedStars([]);
+                      setPriceFilter('不限');
+                      setSelectedFacilities([]);
+                      setSortBy('推荐排序');
+                    }}
+                  >
+                    重置
+                  </button>
+                </div>
               </div>
             </div>
           </aside>
@@ -306,9 +403,10 @@ const HotelList: React.FC = () => {
                     onClick={() => handleViewDetail(hotel.id)}
                   >
                     <div className="p-6">
-                      <div className="flex flex-col md:flex-row gap-6">
+                      {/* 移动端布局 - 竖向 */}
+                      <div className="flex flex-col md:hidden gap-6">
                         {/* 酒店图片 */}
-                        <div className="md:w-1/4">
+                        <div>
                           <div className="w-full h-48 rounded-lg overflow-hidden">
                             {hotel.images && hotel.images.length > 0 ? (
                               <img
@@ -323,8 +421,8 @@ const HotelList: React.FC = () => {
                         </div>
 
                         {/* 酒店信息 */}
-                        <div className="md:w-3/4">
-                          <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex justify-between items-start mb-4">
                             <div>
                               <h3 className="text-xl font-bold text-gray-900 mb-1">
                                 {hotel.name}
@@ -338,23 +436,6 @@ const HotelList: React.FC = () => {
                                 </span>
                               </div>
                               <p className="text-gray-600 mb-2">{hotel.address}</p>
-                              
-                              {/* 酒店标签 */}
-                              <div className="flex flex-wrap gap-1 mb-4">
-                                {hotel.tags?.slice(0, 4).map((tag: string) => (
-                                  <span
-                                    key={tag}
-                                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                                {hotel.tags?.length > 4 && (
-                                  <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                                    +{hotel.tags.length - 4}
-                                  </span>
-                                )}
-                              </div>
                             </div>
                             <div className="text-right">
                               <div className="text-2xl font-bold text-blue-600 mb-1">
@@ -364,7 +445,24 @@ const HotelList: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between mt-4">
+                          {/* 酒店标签 */}
+                          <div className="flex flex-wrap gap-1 mb-4">
+                            {hotel.tags?.slice(0, 4).map((tag: string) => (
+                              <span
+                                key={tag}
+                                className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {hotel.tags?.length > 4 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                +{hotel.tags.length - 4}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               <div className="flex items-center">
                                 <span className="text-lg font-semibold text-green-600 mr-2">
@@ -378,6 +476,90 @@ const HotelList: React.FC = () => {
                             </div>
                             <button 
                               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewDetail(hotel.id);
+                              }}
+                            >
+                              查看详情
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* PC端布局 - 横向左图右文 */}
+                      <div className="hidden md:flex gap-6">
+                        {/* 酒店图片 - 固定240px */}
+                        <div className="w-[240px] shrink-0">
+                          <div className="w-full h-[200px] rounded-lg overflow-hidden">
+                            {hotel.images && hotel.images.length > 0 ? (
+                              <img
+                                src={hotel.images[0]}
+                                alt={hotel.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-r from-blue-400 to-purple-500 rounded-lg"></div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 酒店信息 */}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                                {hotel.name}
+                              </h3>
+                              <div className="flex items-center gap-3 mb-3">
+                                <span className="text-yellow-500 text-xl">
+                                  {'★'.repeat(hotel.stars)}
+                                </span>
+                                <span className="text-gray-600">
+                                  {hotel.stars}星级酒店 · {hotel.city}
+                                </span>
+                              </div>
+                              <p className="text-gray-700 mb-3">{hotel.address}</p>
+                              
+                              {/* 酒店标签 */}
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                {hotel.tags?.slice(0, 6).map((tag: string) => (
+                                  <span
+                                    key={tag}
+                                    className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                                {hotel.tags?.length > 6 && (
+                                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg">
+                                    +{hotel.tags.length - 6}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-3xl font-bold text-blue-600 mb-2">
+                                ¥{minPrice}
+                              </div>
+                              <div className="text-gray-500">起/晚</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-6">
+                              <div className="flex items-center">
+                                <span className="text-xl font-semibold text-green-600 mr-2">
+                                  {hotel.score}
+                                </span>
+                                <span className="text-gray-700">评分</span>
+                              </div>
+                              <div className="text-gray-700">
+                                <span className="font-medium">{hotel.reviewCount}</span> 条评价
+                              </div>
+                            </div>
+                            <button 
+                              className="px-8 py-3 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transition"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleViewDetail(hotel.id);

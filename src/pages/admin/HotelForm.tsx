@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import hotelsData from '../../data/hotels.json';
+import { citiesByProvince, allCities } from '../../data/cities';
+import { useHotelStore } from '../../store/useHotelStore';
 
 interface Hotel {
   id: number;
@@ -23,6 +25,7 @@ interface Hotel {
   }[];
   status: 'published' | 'pending' | 'offline';
   tags: string[];
+  description?: string;
 }
 
 interface RoomType {
@@ -47,8 +50,44 @@ const HotelForm: React.FC = () => {
     city: '上海',
     stars: 3,
     openYear: new Date().getFullYear(),
+    description: '',
     tags: [] as string[],
+    images: [
+      'https://picsum.photos/400/300?random=1',
+      'https://picsum.photos/400/300?random=2', 
+      'https://picsum.photos/400/300?random=3'
+    ]
   });
+
+  // 表单验证错误
+  const [formErrors, setFormErrors] = useState({
+    name: false,
+    nameEn: false,
+    address: false
+  });
+
+  // 城市搜索状态
+  const [showCitySearch, setShowCitySearch] = useState(false);
+  const [citySearch, setCitySearch] = useState('');
+  const [filteredCityData, setFilteredCityData] = useState(citiesByProvince);
+  
+  // 过滤城市数据
+  useEffect(() => {
+    if (!citySearch.trim()) {
+      setFilteredCityData(citiesByProvince);
+    } else {
+      const searchLower = citySearch.toLowerCase();
+      const filtered = citiesByProvince
+        .map(province => ({
+          ...province,
+          cities: province.cities.filter(city => 
+            city.toLowerCase().includes(searchLower)
+          )
+        }))
+        .filter(province => province.cities.length > 0);
+      setFilteredCityData(filtered);
+    }
+  }, [citySearch]);
 
   // 房型管理状态
   const [rooms, setRooms] = useState<RoomType[]>([]);
@@ -61,13 +100,15 @@ const HotelForm: React.FC = () => {
     stock: '',
   });
 
+  // 图片预览状态
+  const [showImageInputs, setShowImageInputs] = useState(false);
+
   // 通用状态
   const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 城市选项
-  const cities = ['上海', '北京', '杭州', '成都', '广州'];
-  
   // 标签选项
   const tagOptions = ['WiFi', '免费停车', '含早餐', '健身房', '泳池', '亲子', '豪华', '商务中心', '机场接送'];
 
@@ -101,7 +142,13 @@ const HotelForm: React.FC = () => {
             city: hotelToEdit.city,
             stars: hotelToEdit.stars,
             openYear: hotelToEdit.openYear,
+            description: hotelToEdit.description || '',
             tags: hotelToEdit.tags || [],
+            images: hotelToEdit.images || [
+              'https://picsum.photos/400/300?random=1',
+              'https://picsum.photos/400/300?random=2',
+              'https://picsum.photos/400/300?random=3'
+            ]
           });
           setRooms(hotelToEdit.rooms || []);
         }
@@ -165,11 +212,27 @@ const HotelForm: React.FC = () => {
   // 处理提交审核
   const handleSubmit = () => {
     // 验证必填字段
-    if (!formData.name || !formData.nameEn || !formData.address) {
-      setToastMessage('请填写酒店基本信息');
+    if (!formData.name.trim()) {
+      setFormErrors({ ...formErrors, name: true });
+      setToastMessage('酒店中文名不能为空');
       setTimeout(() => setToastMessage(''), 3000);
       return;
     }
+    if (!formData.nameEn.trim()) {
+      setFormErrors({ ...formErrors, nameEn: true });
+      setToastMessage('酒店英文名不能为空');
+      setTimeout(() => setToastMessage(''), 3000);
+      return;
+    }
+    if (!formData.address.trim()) {
+      setFormErrors({ ...formErrors, address: true });
+      setToastMessage('详细地址不能为空');
+      setTimeout(() => setToastMessage(''), 3000);
+      return;
+    }
+
+    // 清除错误状态
+    setFormErrors({ name: false, nameEn: false, address: false });
 
     if (rooms.length === 0) {
       setToastMessage('请至少添加一个房型');
@@ -190,13 +253,10 @@ const HotelForm: React.FC = () => {
       city: formData.city,
       stars: formData.stars,
       openYear: formData.openYear,
+      description: formData.description,
       score: 8.0, // 默认评分
       reviewCount: 0, // 初始评价数
-      images: [
-        'https://picsum.photos/400/300?random=1',
-        'https://picsum.photos/400/300?random=2',
-        'https://picsum.photos/400/300?random=3'
-      ],
+      images: formData.images,
       rooms: rooms,
       status: 'pending',
       tags: formData.tags,
@@ -205,9 +265,15 @@ const HotelForm: React.FC = () => {
     if (isEditMode) {
       // 编辑模式：更新现有酒店
       hotels = hotels.map(h => h.id === parseInt(id!) ? newHotel : h);
+      // 同时更新zustand store
+      const { updateHotel } = useHotelStore.getState();
+      updateHotel(parseInt(id!), newHotel);
     } else {
       // 新增模式：添加到数组
       hotels.push(newHotel);
+      // 同时更新zustand store
+      const { addHotel } = useHotelStore.getState();
+      addHotel(newHotel);
     }
 
     // 保存到localStorage
@@ -309,15 +375,17 @@ const HotelForm: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     所在城市
                   </label>
-                  <select
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {cities.map(city => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-left bg-white flex justify-between items-center"
+                      onClick={() => setShowCitySearch(true)}
+                    >
+                      <span>{formData.city}</span>
+                      <span className="text-gray-400">▼</span>
+                    </button>
+                    <div className="text-xs text-gray-500 mt-1">点击选择城市</div>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -363,7 +431,137 @@ const HotelForm: React.FC = () => {
                     max={new Date().getFullYear()}
                   />
                 </div>
+                
+                {/* 酒店简介 */}
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    酒店简介（选填，最多200字）
+                    <span className="ml-2 text-xs text-gray-500">
+                      已输入 {formData.description.length}/200
+                    </span>
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 200) {
+                        setFormData({ ...formData, description: e.target.value });
+                      }
+                    }}
+                    className="w-full h-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="请输入酒店简介，例如：酒店特色、设施、位置优势等..."
+                  />
+                  <div className="flex justify-end text-xs text-gray-500 mt-1">
+                    {formData.description.length >= 180 && formData.description.length < 200 && (
+                      <span className="text-yellow-600">接近字数限制</span>
+                    )}
+                    {formData.description.length === 200 && (
+                      <span className="text-red-600">已达字数上限</span>
+                    )}
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* 【图片上传】 */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-6 pb-3 border-b border-gray-200">
+                酒店图片
+              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-gray-600">支持最多3张图片，每张图片将在网站中展示</p>
+                <button
+                  type="button"
+                  className="px-4 py-2 text-blue-600 hover:text-blue-800 flex items-center gap-2"
+                  onClick={() => setShowImageInputs(!showImageInputs)}
+                >
+                  <span>{showImageInputs ? '收起' : '编辑图片URL'}</span>
+                  <span className="text-lg">{showImageInputs ? '↑' : '↓'}</span>
+                </button>
+              </div>
+              
+              {/* 图片预览 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                {formData.images.map((imgUrl, index) => (
+                  <div key={index} className="relative">
+                    <div className="w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
+                      <img
+                        src={imgUrl}
+                        alt={`酒店图片 ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://picsum.photos/400/300?random=${index + 1}`;
+                        }}
+                      />
+                    </div>
+                    <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                      图片 {index + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* 图片URL输入区域 */}
+              {showImageInputs && (
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 space-y-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">编辑图片URL</h3>
+                  {formData.images.map((imgUrl, index) => (
+                    <div key={index} className="flex gap-4 items-start">
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
+                        <img
+                          src={imgUrl}
+                          alt={`预览 ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://picsum.photos/400/300?random=${index + 1}`;
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          图片 {index + 1} URL
+                        </label>
+                        <input
+                          type="text"
+                          value={imgUrl}
+                          onChange={(e) => {
+                            const newImages = [...formData.images];
+                            newImages[index] = e.target.value;
+                            setFormData({ ...formData, images: newImages });
+                          }}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="请输入图片URL"
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          {imgUrl.includes('picsum') ? '使用默认图片' : '自定义图片URL'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                      onClick={() => {
+                        const defaultImages = [
+                          'https://picsum.photos/400/300?random=1',
+                          'https://picsum.photos/400/300?random=2',
+                          'https://picsum.photos/400/300?random=3'
+                        ];
+                        setFormData({ ...formData, images: defaultImages });
+                      }}
+                    >
+                      恢复默认图片
+                    </button>
+                    <button
+                      type="button"
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+                      onClick={() => setShowImageInputs(false)}
+                    >
+                      保存并收起
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 【酒店标签】 */}
@@ -593,6 +791,80 @@ const HotelForm: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* 城市选择模态框 */}
+      {showCitySearch && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">选择城市</h3>
+                <button
+                  onClick={() => {
+                    setShowCitySearch(false);
+                    setCitySearch('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <input
+                type="text"
+                value={citySearch}
+                onChange={(e) => setCitySearch(e.target.value)}
+                placeholder="搜索城市名或省份..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              {filteredCityData.length > 0 ? (
+                <div className="space-y-6">
+                  {filteredCityData.map((province) => (
+                    <div key={province.province}>
+                      <h4 className="text-lg font-medium text-gray-900 mb-3">{province.province}</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {province.cities.map((city: string) => (
+                          <button
+                            key={city}
+                            onClick={() => {
+                              setFormData({ ...formData, city });
+                              setShowCitySearch(false);
+                              setCitySearch('');
+                            }}
+                            className={`px-4 py-2 rounded-lg text-left transition ${
+                              formData.city === city
+                                ? 'bg-blue-100 text-blue-700 border-2 border-blue-500'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-transparent'
+                            }`}
+                          >
+                            {city}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  没有找到匹配的城市
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowCitySearch(false);
+                  setCitySearch('');
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast提示 */}
       {toastMessage && (

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { citiesByProvince, allCities } from '../../data/cities';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -24,15 +25,35 @@ const Home: React.FC = () => {
   const [showCityDrawer, setShowCityDrawer] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   
-  // 城市列表
-  const cities = ['上海', '北京', '杭州', '成都', '广州'];
+  // 城市搜索状态
+  const [citySearch, setCitySearch] = useState('');
+  const [filteredCityData, setFilteredCityData] = useState(citiesByProvince);
+  
+  // 过滤城市数据
+  useEffect(() => {
+    if (!citySearch.trim()) {
+      setFilteredCityData(citiesByProvince);
+    } else {
+      const searchLower = citySearch.toLowerCase();
+      const filtered = citiesByProvince
+        .map(province => ({
+          ...province,
+          cities: province.cities.filter(city => 
+            city.toLowerCase().includes(searchLower)
+          )
+        }))
+        .filter(province => province.cities.length > 0);
+      setFilteredCityData(filtered);
+    }
+  }, [citySearch]);
   
   // 价格筛选选项
   const priceOptions = [
     { value: '不限', label: '不限' },
-    { value: '200以下', label: '200以下' },
-    { value: '200-500', label: '200-500' },
-    { value: '500以上', label: '500以上' },
+    { value: '200以下', label: '¥200以下' },
+    { value: '200-500', label: '¥200-500' },
+    { value: '500-1000', label: '¥500-1000' },
+    { value: '1000以上', label: '¥1000以上' },
   ];
   
   // 快捷标签
@@ -134,9 +155,23 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] max-w-[430px] mx-auto relative">
+    <div className="min-h-screen bg-[#f5f5f5] relative">
+      {/* PC端顶部导航栏 - md及以上显示 */}
+      <div className="hidden md:flex items-center justify-between px-8 py-4 bg-white shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-3xl">🏨</span>
+          <h1 className="text-xl font-bold text-gray-900">易宿</h1>
+        </div>
+        <a 
+          href="/admin/login" 
+          className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+        >
+          登录商家后台
+        </a>
+      </div>
+
       {/* 顶部轮播组件 */}
-      <div className="relative h-[180px] overflow-hidden">
+      <div className="relative h-[180px] md:h-[300px] overflow-hidden">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
@@ -147,8 +182,8 @@ const Home: React.FC = () => {
             style={{ cursor: 'pointer' }}
           >
             <div className="h-full flex flex-col items-center justify-center text-white p-6">
-              <h2 className="text-3xl font-bold mb-2">{slide.title}</h2>
-              <p className="text-lg opacity-90">{slide.subtitle}</p>
+              <h2 className="text-3xl md:text-4xl font-bold mb-2">{slide.title}</h2>
+              <p className="text-lg md:text-xl opacity-90">{slide.subtitle}</p>
             </div>
           </div>
         ))}
@@ -158,7 +193,7 @@ const Home: React.FC = () => {
           {slides.map((_, index) => (
             <button
               key={index}
-              className={`w-2 h-2 rounded-full transition-all ${
+              className={`w-2 h-2 md:w-3 md:h-3 rounded-full transition-all ${
                 index === currentSlide ? 'bg-white' : 'bg-white/50'
               }`}
               onClick={(e) => {
@@ -171,138 +206,350 @@ const Home: React.FC = () => {
         </div>
       </div>
 
-      {/* 搜索卡片 */}
-      <div className="bg-white rounded-2xl mx-4 p-5 -mt-5 relative z-10 shadow-lg">
-        {/* 城市选择 */}
-        <div className="mb-4">
-          <div 
-            className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors cursor-pointer"
-            onClick={() => setShowCityDrawer(true)}
-          >
-            <span className="text-xl mr-3">📍</span>
-            <div className="flex-1">
-              <div className="text-sm text-gray-500 mb-1">城市</div>
-              <div className="text-lg font-medium">{selectedCity}</div>
-            </div>
-            <span className="text-gray-400">▼</span>
-          </div>
-        </div>
-
-        {/* 日期选择 */}
-        <div className="mb-4">
-          <div 
-            className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors cursor-pointer"
-            onClick={() => setShowCalendar(true)}
-          >
-            <span className="text-xl mr-3">📅</span>
-            <div className="flex-1 flex justify-between items-center">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">入住</div>
-                <div className="text-lg font-medium">
-                  {checkInDate.split('-')[1]}月{checkInDate.split('-')[2]}日
-                </div>
+      {/* 移动端搜索卡片 - 小屏显示 */}
+      <div className="md:hidden">
+        <div className="bg-white rounded-2xl mx-4 p-5 -mt-5 relative z-10 shadow-lg">
+          {/* 城市选择 */}
+          <div className="mb-4">
+            <div 
+              className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors cursor-pointer"
+              onClick={() => setShowCityDrawer(true)}
+            >
+              <span className="text-xl mr-3">📍</span>
+              <div className="flex-1">
+                <div className="text-sm text-gray-500 mb-1">城市</div>
+                <div className="text-lg font-medium">{selectedCity}</div>
               </div>
-              <div className="text-center px-2">
-                <div className="text-sm text-gray-500 mb-1">共{getNights()}晚</div>
-                <div className="text-gray-400 text-xs">→</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">离店</div>
-                <div className="text-lg font-medium">
-                  {checkOutDate.split('-')[1]}月{checkOutDate.split('-')[2]}日
-                </div>
-              </div>
+              <span className="text-gray-400">▼</span>
             </div>
           </div>
-        </div>
 
-        {/* 关键字搜索 */}
-        <div className="mb-4">
-          <div className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors">
-            <span className="text-xl mr-3">🔍</span>
-            <input
-              type="text"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              className="flex-1 outline-none text-lg"
-              placeholder="搜索酒店名/地址"
-            />
+          {/* 日期选择 */}
+          <div className="mb-4">
+            <div 
+              className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors cursor-pointer"
+              onClick={() => setShowCalendar(true)}
+            >
+              <span className="text-xl mr-3">📅</span>
+              <div className="flex-1 flex justify-between items-center">
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">入住</div>
+                  <div className="text-lg font-medium">
+                    {checkInDate.split('-')[1]}月{checkInDate.split('-')[2]}日
+                  </div>
+                </div>
+                <div className="text-center px-2">
+                  <div className="text-sm text-gray-500 mb-1">共{getNights()}晚</div>
+                  <div className="text-gray-400 text-xs">→</div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500 mb-1">离店</div>
+                  <div className="text-lg font-medium">
+                    {checkOutDate.split('-')[1]}月{checkOutDate.split('-')[2]}日
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* 价格筛选 */}
-        <div className="mb-4">
-          <div className="text-sm text-gray-500 mb-2">价格范围</div>
-          <div className="flex flex-wrap gap-2">
-            {priceOptions.map((option) => (
-              <button
-                key={option.value}
-                className={`px-4 py-2 rounded-full transition-colors ${
-                  priceRange === option.value
-                    ? 'bg-[#0084FF] text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-                onClick={() => setPriceRange(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
+          {/* 关键字搜索 */}
+          <div className="mb-4">
+            <div className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors">
+              <span className="text-xl mr-3">🔍</span>
+              <input
+                type="text"
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="flex-1 outline-none text-lg"
+                placeholder="搜索酒店名/地址"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* 快捷标签 */}
-        <div className="mb-2">
-          <div className="text-sm text-gray-500 mb-2">快捷标签</div>
-          <div className="overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-            <div className="flex space-x-2 min-w-max">
-              {tags.map((tag) => (
+          {/* 价格筛选 */}
+          <div className="mb-4">
+            <div className="text-sm text-gray-500 mb-2">价格范围</div>
+            <div className="flex flex-wrap gap-2">
+              {priceOptions.map((option) => (
                 <button
-                  key={tag.id}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors flex items-center ${
-                    selectedTags.includes(tag.id)
+                  key={option.value}
+                  className={`px-4 py-2 rounded-full transition-colors ${
+                    priceRange === option.value
                       ? 'bg-[#0084FF] text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
-                  onClick={() => handleTagClick(tag.id)}
+                  onClick={() => setPriceRange(option.value)}
                 >
-                  <span className="mr-1">{tag.icon}</span>
-                  {tag.label.replace(tag.icon + ' ', '')}
+                  {option.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* 快捷标签 */}
+          <div className="mb-2">
+            <div className="text-sm text-gray-500 mb-2">快捷标签</div>
+            <div className="overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              <div className="flex space-x-2 min-w-max">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors flex items-center ${
+                      selectedTags.includes(tag.id)
+                        ? 'bg-[#0084FF] text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleTagClick(tag.id)}
+                  >
+                    <span className="mr-1">{tag.icon}</span>
+                    {tag.label.replace(tag.icon + ' ', '')}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 城市选择抽屉 */}
-      {showCityDrawer && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white w-full rounded-t-2xl p-6 max-h-[70vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">选择城市</h3>
-              <button 
-                className="text-2xl"
-                onClick={() => setShowCityDrawer(false)}
-              >
-                ×
-              </button>
-            </div>
-            <div className="space-y-3">
-              {cities.map((city) => (
-                <button
-                  key={city}
-                  className={`w-full p-4 text-left rounded-xl transition-colors ${
-                    selectedCity === city
-                      ? 'bg-[#0084FF] text-white'
-                      : 'bg-gray-100 hover:bg-gray-200'
-                  }`}
-                  onClick={() => {
-                    setSelectedCity(city);
-                    setShowCityDrawer(false);
-                  }}
+      {/* PC端搜索卡片 - 大屏显示 */}
+      <div className="hidden md:block">
+        <div className="max-w-[1200px] mx-auto px-4 -mt-10 relative z-10">
+          {/* 搜索主卡片 */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg mb-6">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              {/* 城市选择 */}
+              <div className="flex-1 w-full md:w-auto">
+                <div 
+                  className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors cursor-pointer"
+                  onClick={() => setShowCityDrawer(true)}
                 >
-                  <div className="text-lg font-medium">{city}</div>
+                  <span className="text-xl mr-3">📍</span>
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-500 mb-1">城市</div>
+                    <div className="text-lg font-medium">{selectedCity}</div>
+                  </div>
+                  <span className="text-gray-400">▼</span>
+                </div>
+              </div>
+
+              {/* 日期选择 */}
+              <div className="flex-1 w-full md:w-auto">
+                <div 
+                  className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors cursor-pointer"
+                  onClick={() => setShowCalendar(true)}
+                >
+                  <span className="text-xl mr-3">📅</span>
+                  <div className="flex-1 flex justify-between items-center">
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">入住</div>
+                      <div className="text-lg font-medium">
+                        {checkInDate.split('-')[1]}月{checkInDate.split('-')[2]}日
+                      </div>
+                    </div>
+                    <div className="text-center px-2">
+                      <div className="text-sm text-gray-500 mb-1">共{getNights()}晚</div>
+                      <div className="text-gray-400 text-xs">→</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500 mb-1">离店</div>
+                      <div className="text-lg font-medium">
+                        {checkOutDate.split('-')[1]}月{checkOutDate.split('-')[2]}日
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 关键字搜索 */}
+              <div className="flex-1 w-full md:w-auto">
+                <div className="flex items-center p-3 border border-gray-200 rounded-xl hover:border-[#0084FF] transition-colors">
+                  <span className="text-xl mr-3">🔍</span>
+                  <input
+                    type="text"
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    className="flex-1 outline-none text-lg"
+                    placeholder="搜索酒店名/地址"
+                  />
+                </div>
+              </div>
+
+              {/* 查询按钮 */}
+              <div className="w-full md:w-auto">
+                <button
+                  className="w-full md:w-32 h-12 bg-[#0084FF] text-white text-lg font-semibold rounded-xl shadow-lg hover:bg-[#0073e6] transition-colors active:scale-95"
+                  onClick={handleSearch}
+                >
+                  查 询
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 快捷筛选区域 */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg">
+            {/* 价格筛选 */}
+            <div className="mb-6">
+              <div className="text-sm text-gray-500 mb-3">价格范围</div>
+              <div className="flex flex-wrap gap-3">
+                {priceOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={`px-5 py-2 rounded-full transition-colors ${
+                      priceRange === option.value
+                        ? 'bg-[#0084FF] text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => setPriceRange(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 快捷标签 */}
+            <div>
+              <div className="text-sm text-gray-500 mb-3">快捷标签</div>
+              <div className="flex flex-wrap gap-3">
+                {tags.map((tag) => (
+                  <button
+                    key={tag.id}
+                    className={`px-5 py-2 rounded-full whitespace-nowrap transition-colors flex items-center ${
+                      selectedTags.includes(tag.id)
+                        ? 'bg-[#0084FF] text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    onClick={() => handleTagClick(tag.id)}
+                  >
+                    <span className="mr-2">{tag.icon}</span>
+                    {tag.label.replace(tag.icon + ' ', '')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 移动端城市选择抽屉 - 从底部弹出 */}
+      {showCityDrawer && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-2xl p-4 max-h-[70vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-10 pb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">选择城市</h3>
+                <button 
+                  className="text-2xl"
+                  onClick={() => setShowCityDrawer(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* 搜索框 */}
+              <div className="relative mb-4">
+                <div className="flex items-center p-3 bg-gray-100 rounded-xl">
+                  <span className="text-xl mr-3 text-gray-500">🔍</span>
+                  <input
+                    type="text"
+                    value={citySearch}
+                    onChange={(e) => setCitySearch(e.target.value)}
+                    className="flex-1 outline-none bg-transparent text-lg"
+                    placeholder="搜索城市名"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* 城市列表 - 按省份分组 */}
+            <div className="space-y-6">
+              {filteredCityData.map((provinceData) => (
+                <div key={provinceData.province}>
+                  <div className="text-sm text-gray-500 mb-2 px-1">
+                    {provinceData.province}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {provinceData.cities.map((city) => (
+                      <button
+                        key={city}
+                        className={`px-4 py-2 rounded-full transition-colors ${
+                          selectedCity === city
+                            ? 'bg-[#0084FF] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        onClick={() => {
+                          setSelectedCity(city);
+                          setShowCityDrawer(false);
+                        }}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PC端城市选择浮层 - 下拉显示 */}
+      {showCityDrawer && (
+        <div className="hidden md:block fixed inset-0 bg-black/10 z-50">
+          <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-[600px] bg-white rounded-2xl shadow-2xl p-6 max-h-[70vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white z-10 pb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold">选择城市</h3>
+                <button 
+                  className="text-2xl hover:text-gray-700"
+                  onClick={() => setShowCityDrawer(false)}
+                >
+                  ×
+                </button>
+              </div>
+              
+              {/* 搜索框 */}
+              <div className="relative mb-6">
+                <div className="flex items-center p-3 bg-gray-100 rounded-xl">
+                  <span className="text-xl mr-3 text-gray-500">🔍</span>
+                  <input
+                    type="text"
+                    value={citySearch}
+                    onChange={(e) => setCitySearch(e.target.value)}
+                    className="flex-1 outline-none bg-transparent text-lg"
+                    placeholder="搜索城市名或拼音"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            {/* 城市列表 - 按省份分组 */}
+            <div className="grid grid-cols-2 gap-6">
+              {filteredCityData.map((provinceData) => (
+                <div key={provinceData.province}>
+                  <div className="text-sm font-medium text-gray-500 mb-3 px-2">
+                    {provinceData.province}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {provinceData.cities.map((city) => (
+                      <button
+                        key={city}
+                        className={`px-4 py-2 rounded-lg transition-colors ${
+                          selectedCity === city
+                            ? 'bg-[#0084FF] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                        onClick={() => {
+                          setSelectedCity(city);
+                          setShowCityDrawer(false);
+                        }}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -383,8 +630,8 @@ const Home: React.FC = () => {
         </div>
       )}
 
-      {/* 底部固定查询按钮 */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white to-transparent max-w-[430px] mx-auto">
+      {/* 底部固定查询按钮 - 仅移动端显示 */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-white to-transparent max-w-[430px] mx-auto">
         <button
           className="w-[90%] mx-auto h-12 bg-[#0084FF] text-white text-lg font-semibold rounded-full shadow-lg hover:bg-[#0073e6] transition-colors active:scale-95"
           onClick={handleSearch}
