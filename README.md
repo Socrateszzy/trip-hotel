@@ -150,25 +150,3 @@ src/
 ├── App.tsx            # 主应用组件（路由配置）
 └── main.tsx           # 应用入口
 ```
-
-## 注意事项
-
-1. **本地存储限制**: localStorage有5MB大小限制，生产环境建议使用真实后端API
-2. **浏览器兼容性**: 支持现代浏览器（Chrome 90+, Firefox 88+, Safari 14+）
-3. **TypeScript严格模式**: 项目使用TypeScript严格模式，确保类型安全
-4. **Tailwind CSS v4**: 使用最新版Tailwind CSS，配置简洁
-
-## 未来扩展
-
-1. **真实后端API**: 集成Node.js + Express或Next.js后端服务
-2. **数据库集成**: 使用MySQL/PostgreSQL或MongoDB存储数据
-3. **支付功能**: 集成支付宝/微信支付接口
-4. **地图服务**: 集成高德/百度地图API显示酒店位置
-5. **评价系统**: 用户评价和评分系统
-6. **移动端App**: 使用React Native或Flutter开发移动端App
-
----
-
-**项目作者**: TripHotel团队  
-**创建时间**: 2026年3月  
-**版本**: 1.0.0
